@@ -23,6 +23,16 @@
       { q: 'MLP merupakan salah satu jenis...', options: ['Jaringan saraf tiruan berlapis', 'Basis data relasional', 'Metode pengurutan', 'Visualisasi peta'], answer: 0 },
       { q: 'Apa fungsi data validasi?', options: ['Membantu memilih konfigurasi model selama pengembangan', 'Menjadi nama kelas keluaran', 'Menghapus data pelatihan', 'Menggantikan semua evaluasi'], answer: 0 },
       { q: 'Confidence prediksi sebaiknya dipahami sebagai...', options: ['Probabilitas/tingkat keyakinan model, bukan kepastian', 'Jaminan nilai akademik', 'Jumlah XP', 'Akurasi universal model'], answer: 0 }
+    ] },
+    { id: 'q4', title: 'Interpretasi Hasil KNN', topic: 'Analisis adaptif', duration: 180, module: 'm4', questions: [
+      { q: 'Apa yang harus dilakukan saat hasil model adalah Perlu Remedial?', options: ['Meninjau materi dan jawaban yang salah', 'Mengabaikan hasil', 'Menghapus semua nilai', 'Menaikkan level secara manual'], answer: 0 },
+      { q: 'Mengapa fitur harus memakai urutan saat training?', options: ['Agar setiap nilai diproses sebagai variabel yang benar', 'Agar tampilan lebih rapi', 'Agar XP bertambah', 'Agar model dilatih ulang'], answer: 0 },
+      { q: 'Apa fungsi median tersimpan dalam artefak?', options: ['Mengisi nilai fitur yang hilang', 'Menentukan warna badge', 'Mengganti jawaban kuis', 'Membuka semua level'], answer: 0 }
+    ] },
+    { id: 'q5', title: 'Tantangan Akhir ITS', topic: 'Penerapan', duration: 210, module: 'm4', questions: [
+      { q: 'Komponen apa yang digunakan untuk menyamakan skala input dengan saat training?', options: ['Scaler tersimpan', 'CSS', 'LocalStorage', 'Badge'], answer: 0 },
+      { q: 'Kapan level berikutnya dapat dibuka dalam sistem ini?', options: ['Saat model memprediksi Tuntas pada kuis level aktif', 'Setiap membuka halaman', 'Saat menutup browser', 'Setiap kali nilai kosong'], answer: 0 },
+      { q: 'Apa arti hasil prediksi KNN?', options: ['Estimasi berdasarkan pola data latih', 'Kepastian mutlak prestasi siswa', 'Nilai yang dibuat acak', 'Jumlah soal yang sudah dibuka'], answer: 0 }
     ] }
   ];
   const levels = [
@@ -37,8 +47,13 @@
     { id: 'ten', icon: '◇', name: 'Tekun Berlatih', desc: 'Selesaikan 10 kuis.', test: s => s.history.length >= 10 },
     { id: 'level5', icon: '★', name: 'Level 5', desc: 'Kumpulkan 750 XP.', test: s => s.xp >= 750 }
   ];
-  const today = () => new Date().toISOString().slice(0, 10);
-  const freshState = () => ({ xp: 0, history: [], badges: {}, materialProgress: {}, activities: [], xpEvents: [], streak: { days: 0, best: 0, lastDate: '' }, dailyQuest: { date: today(), done: false, rewardClaimed: false }, latestPrediction: null, profileName: 'Pembelajar lokal' });
+  const dayKey = date => {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
+    const value = type => parts.find(p => p.type === type).value;
+    return `${value('year')}-${value('month')}-${value('day')}`;
+  };
+  const today = () => dayKey(new Date());
+  const freshState = () => ({ xp: 0, unlockedLevel: 1, history: [], badges: {}, materialProgress: {}, activities: [], xpEvents: [], streak: { days: 0, best: 0, lastDate: '' }, dailyQuest: { date: today(), done: false, rewardClaimed: false }, latestPrediction: null, profileName: 'Pembelajar lokal' });
   let state = loadState();
   let currentQuiz = null;
   let timerId = null;
@@ -50,7 +65,7 @@
       const parsed = JSON.parse(localStorage.getItem(STORE_KEY));
       if (!parsed || typeof parsed !== 'object') return freshState();
       const base = freshState();
-      return { ...base, ...parsed, streak: { ...base.streak, ...(parsed.streak || {}) }, dailyQuest: { ...base.dailyQuest, ...(parsed.dailyQuest || {}) } };
+      return { ...base, ...parsed, unlockedLevel: Number.isInteger(parsed.unlockedLevel) ? Math.min(5, Math.max(1, parsed.unlockedLevel)) : 1, latestPrediction: Array.isArray(parsed.latestPrediction?.badges) && parsed.latestPrediction?.features_used ? parsed.latestPrediction : null, streak: { ...base.streak, ...(parsed.streak || {}) }, dailyQuest: { ...base.dailyQuest, ...(parsed.dailyQuest || {}) } };
     } catch (_) { return freshState(); }
   }
   function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
@@ -66,15 +81,14 @@
     if (state.xpEvents.length > 500) state.xpEvents = state.xpEvents.slice(-500);
   }
   function currentLevel() {
-    let index = 0;
-    levels.forEach((x, i) => { if (state.xp >= x.min) index = i; });
+    const index = Math.min(levels.length - 1, Math.max(0, state.unlockedLevel - 1));
     const start = levels[index].min, next = levels[index + 1]?.min;
-    return { index, name: levels[index].name, start, next, percent: next ? Math.min(100, Math.floor(((state.xp - start) / (next - start)) * 100)) : 100, within: next ? state.xp - start : state.xp - start };
+    return { index, name: levels[index].name, start, next, percent: next ? Math.max(0, Math.min(100, Math.floor(((state.xp - start) / (next - start)) * 100))) : 100, within: Math.max(0, state.xp - start) };
   }
   function recordLearningDay() {
     const d = today(), last = state.streak.lastDate;
     if (last !== d) {
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const yesterday = dayKey(new Date(Date.now() - 86400000));
       state.streak.days = last === yesterday ? state.streak.days + 1 : 1;
       state.streak.lastDate = d;
       state.streak.best = Math.max(state.streak.best, state.streak.days);
@@ -114,7 +128,7 @@
     document.getElementById('level-label').textContent = lv.name;
     document.getElementById('side-level-name').textContent = lv.name;
     document.getElementById('side-level').textContent = String(lv.index + 1).padStart(2, '0');
-    document.getElementById('path-level').textContent = `Level ${lv.index + 1} - ${lv.name}`;
+    document.getElementById('path-level').textContent = `Level adaptif ${state.unlockedLevel} dari 5`;
     document.getElementById('stat-progress').style.width = `${lv.percent}%`;
     document.getElementById('side-progress').style.width = `${lv.percent}%`;
     document.getElementById('level-percent').textContent = `${lv.percent}%`;
@@ -133,12 +147,12 @@
     document.getElementById('material-progress').style.width = `${done / modules.length * 100}%`;
     document.getElementById('hero-path-progress').textContent = `${done} materi selesai`;
     document.getElementById('activity-count').textContent = `${state.activities.length} aktivitas`;
-    renderWeeklyChart(); renderPath(); renderQuizList(); renderHistory(); renderAchievements(); renderQuest();
+    renderWeeklyChart(); renderPath(); renderQuizList(); renderHistory(); renderAchievements(); renderQuest(); renderDashboardPrediction();
   }
   function renderPath() {
-    let unlocked = true;
     document.getElementById('learning-path-content').innerHTML = modules.map((m, i) => {
-      const complete = !!state.materialProgress[m.id], available = unlocked; unlocked = complete;
+      const complete = !!state.materialProgress[m.id];
+      const available = i === 0 || (i + 1 <= state.unlockedLevel && !!state.materialProgress[modules[i - 1].id]);
       return `<article class="panel module-card ${complete ? 'completed' : ''} ${available ? '' : 'locked'}"><div class="module-number">${complete ? '✓' : String(i + 1).padStart(2, '0')}</div><div class="module-copy"><div class="eyebrow">${m.tag} · ${m.time}</div><h3>${escapeHtml(m.title)}</h3><p>${escapeHtml(m.body)}</p><span class="module-state">${complete ? 'SELESAI' : available ? 'TERSEDIA' : 'TERKUNCI'}</span></div><button class="button ${complete ? 'button-quiet' : 'button-primary'}" data-module="${m.id}" ${available ? '' : 'disabled'}>${complete ? 'Ulangi materi' : 'Buka materi'} <span>→</span></button></article>`;
     }).join('');
     document.querySelectorAll('[data-module]').forEach(b => b.addEventListener('click', () => openModule(b.dataset.module)));
@@ -158,9 +172,9 @@
     const wrap = document.getElementById('quiz-list'); if (!wrap) return;
     wrap.hidden = false;
     wrap.innerHTML = quizzes.map((q, i) => {
-      const unlocked = i === 0 || !!state.materialProgress[q.module];
+      const unlocked = i === 0 || (i + 1 <= state.unlockedLevel && !!state.materialProgress[q.module]);
       const best = state.history.filter(x => x.quizId === q.id).reduce((a, x) => Math.max(a, x.score), -1);
-      return `<article class="panel quiz-tile"><div class="quiz-tile-icon">${['◇', '◎', '✧'][i]}</div><div class="quiz-tile-copy"><div class="eyebrow">${escapeHtml(q.topic)} · ${Math.ceil(q.duration / 60)} MENIT</div><h3>${escapeHtml(q.title)}</h3><p>${q.questions.length} soal latihan contoh${best >= 0 ? ` · Nilai terbaik ${best}` : ''}</p></div><button class="button ${unlocked ? 'button-primary' : 'button-quiet'}" data-start-quiz="${q.id}" ${unlocked ? '' : 'disabled'}>${unlocked ? 'Mulai kuis' : 'Selesaikan materi dulu'} <span>→</span></button></article>`;
+      return `<article class="panel quiz-tile"><div class="quiz-tile-icon">${(['◇', '◎', '✧'][i] || '◇')}</div><div class="quiz-tile-copy"><div class="eyebrow">${escapeHtml(q.topic)} · ${Math.ceil(q.duration / 60)} MENIT</div><h3>${escapeHtml(q.title)}</h3><p>${q.questions.length} soal latihan contoh${best >= 0 ? ` · Nilai terbaik ${best}` : ''}</p></div><button class="button ${unlocked ? 'button-primary' : 'button-quiet'}" data-start-quiz="${q.id}" ${unlocked ? '' : 'disabled'}>${unlocked ? 'Mulai kuis' : i + 1 > state.unlockedLevel ? 'Tuntaskan level sebelumnya' : 'Selesaikan materi dulu'} <span>→</span></button></article>`;
     }).join('');
     wrap.querySelectorAll('[data-start-quiz]').forEach(b => b.addEventListener('click', () => startQuiz(b.dataset.startQuiz)));
   }
@@ -181,22 +195,82 @@
     document.getElementById('quiz-prev').onclick = () => { s.index--; renderQuizSession(); };
     document.getElementById('quiz-next').onclick = () => { if (s.index < q.questions.length - 1) { s.index++; renderQuizSession(); } else if (s.answers.includes(null)) { toast('Jawab semua soal sebelum mengumpulkan.'); } else submitQuiz(false); };
   }
-  function submitQuiz(auto) {
-    if (!currentQuiz) return;
+  function nextStreakDays() {
+    if (state.streak.lastDate === today()) return state.streak.days;
+    const yesterday = dayKey(new Date(Date.now() - 86400000));
+    return state.streak.lastDate === yesterday ? state.streak.days + 1 : 1;
+  }
+  function quizPayload(s, score, correct) {
+    const total = s.quiz.questions.length;
+    const completion = Math.round(s.answers.filter(x => x !== null).length / total * 100);
+    const streak = nextStreakDays();
+    return {
+      quiz_score: score,
+      duration_minutes: Math.max(0.01, Math.round((Date.now() - s.startedAt) / 600) / 100),
+      attempt_count: state.history.filter(x => x.quizId === s.quiz.id).length + 1,
+      task_difficulty: quizzes.indexOf(s.quiz) + 1,
+      completion_rate: completion,
+      accuracy: Math.round(correct / total * 100),
+      streak_days: streak,
+      engagement_score: Math.min(100, Math.round(completion * 0.5 + score * 0.3 + Math.min(streak * 20, 100) * 0.2)),
+      hint_count: 0,
+      feedback_frequency: null,
+      game_level: state.unlockedLevel,
+      accumulated_xp: state.xp,
+      completed_modules: modules.filter(m => state.materialProgress[m.id]).length,
+      total_modules: modules.length,
+      completed_quizzes: state.history.length
+    };
+  }
+  async function submitQuiz(auto) {
+    if (!currentQuiz || currentQuiz.submitting) return;
     if (!auto && currentQuiz.answers.includes(null)) { toast('Jawab semua soal sebelum mengumpulkan.'); return; }
-    clearInterval(timerId); const s = currentQuiz, correct = s.answers.reduce((n, a, i) => n + (a === s.quiz.questions[i].answer ? 1 : 0), 0), score = Math.round(correct / s.quiz.questions.length * 100);
-    let reward = 10 + correct * 10 + (score >= 90 ? 40 : score >= 80 ? 20 : 0) + (score === 100 ? 30 : 0);
-    recordLearningDay(); addXP(reward, `Kuis: ${s.quiz.title}`);
-    const attempt = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, quizId: s.quiz.id, quizTitle: s.quiz.title, score, correct, total: s.quiz.questions.length, xp: reward, date: new Date().toISOString(), duration: Math.max(1, Math.round((Date.now() - s.startedAt) / 1000)), answers: s.answers.slice() };
-    state.history.push(attempt); logActivity('quiz_submitted', 'Mengumpulkan kuis');
-    if (state.dailyQuest.date !== today()) state.dailyQuest = { date: today(), done: false, rewardClaimed: false };
-    if (!state.dailyQuest.done) { state.dailyQuest.done = true; state.dailyQuest.rewardClaimed = true; addXP(15, 'Misi harian: selesaikan kuis'); }
-    checkBadges(); save(); currentQuiz = null; document.getElementById('quiz-session').hidden = true; document.getElementById('quiz-list').hidden = false;
-    renderAll(); renderQuizResult(attempt, auto); toast(`Kuis selesai · +${reward + 15} XP`);
+    clearInterval(timerId);
+    const s = currentQuiz;
+    s.submitting = true;
+    const correct = s.answers.reduce((n, a, i) => n + (a === s.quiz.questions[i].answer ? 1 : 0), 0);
+    const score = Math.round(correct / s.quiz.questions.length * 100);
+    const payload = quizPayload(s, score, correct);
+    const result = document.getElementById('quiz-result');
+    result.hidden = false;
+    result.innerHTML = '<div class="empty-state">Memproses hasil melalui model KNN...</div>';
+    try {
+      const response = await fetch('/api/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Input kuis tidak valid.');
+      const oldBadges = { ...state.badges };
+      recordLearningDay();
+      addXP(data.xp_earned, `Kuis: ${s.quiz.title}`);
+      const attempt = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, quizId: s.quiz.id, quizTitle: s.quiz.title, score, correct, total: s.quiz.questions.length, xp: data.xp_earned, date: new Date().toISOString(), duration: Math.max(1, Math.round((Date.now() - s.startedAt) / 1000)), answers: s.answers.slice(), status: data.status };
+      state.history.push(attempt);
+      logActivity('quiz_submitted', 'Mengumpulkan kuis');
+      if (state.dailyQuest.date !== today()) state.dailyQuest = { date: today(), done: false, rewardClaimed: false };
+      attempt.bonusXp = 0;
+      if (!state.dailyQuest.done) { state.dailyQuest.done = true; state.dailyQuest.rewardClaimed = true; attempt.bonusXp = 15; addXP(15, 'Misi harian: selesaikan kuis'); }
+      state.unlockedLevel = Math.max(state.unlockedLevel, data.unlocked_level);
+      checkBadges();
+      const earnedBadges = badgeDefs.filter(b => !oldBadges[b.id] && state.badges[b.id]).map(b => b.name);
+      state.latestPrediction = { ...data, badges: earnedBadges, at: new Date().toISOString() };
+      save();
+      currentQuiz = null;
+      document.getElementById('quiz-session').hidden = true;
+      document.getElementById('quiz-list').hidden = false;
+      renderAll();
+      renderQuizResult(attempt, auto);
+      renderAdaptiveResult();
+      toast(`Kuis selesai · +${data.xp_earned + attempt.bonusXp} XP`);
+    } catch (err) {
+      result.innerHTML = `<div class="empty-state"><b>Model belum dapat memproses kuis.</b><p>${escapeHtml(err.message)}</p><button class="button button-primary" id="retry-quiz">Coba lagi</button></div>`;
+      document.getElementById('retry-quiz').onclick = () => submitQuiz(auto);
+    } finally { if (currentQuiz === s) s.submitting = false; }
   }
   function renderQuizResult(a, auto) {
-    const q = quizzes.find(x => x.id === a.quizId), el = document.getElementById('quiz-result'); el.hidden = false;
-    el.innerHTML = `<div class="result-orb">${a.score}</div><div class="eyebrow">HASIL TANTANGAN</div><h2>${a.score >= 80 ? 'Kerja bagus!' : 'Terus berlatih!'}</h2><p>${escapeHtml(a.quizTitle)} · ${a.correct}/${a.total} jawaban benar${auto ? ' · waktu habis' : ''}</p><div class="result-stats"><span><b>${a.score}</b>Nilai</span><span><b>+${a.xp + 15}</b>XP total</span><span><b>${formatDuration(a.duration)}</b>Durasi</span></div><details class="answer-review"><summary>Tinjau jawaban</summary>${q.questions.map((item, i) => `<div class="review-item"><b>${i + 1}. ${escapeHtml(item.q)}</b><p class="${a.answers[i] === item.answer ? 'correct-answer' : 'wrong-answer'}">Jawabanmu: ${a.answers[i] === null ? 'Tidak dijawab' : escapeHtml(item.options[a.answers[i]])}</p><small>Kunci: ${escapeHtml(item.options[item.answer])}</small></div>`).join('')}</details><button class="button button-primary" id="result-next">Lihat kuis berikutnya <span>→</span></button>`;
+    const q = quizzes.find(x => x.id === a.quizId);
+    const data = state.latestPrediction;
+    const el = document.getElementById('quiz-result');
+    el.hidden = false;
+    const review = q.questions.map((item, i) => `<div class="review-item"><b>${i + 1}. ${escapeHtml(item.q)}</b><p class="${a.answers[i] === item.answer ? 'correct-answer' : 'wrong-answer'}">Jawabanmu: ${a.answers[i] === null ? 'Tidak dijawab' : escapeHtml(item.options[a.answers[i]])}</p><small>Kunci: ${escapeHtml(item.options[item.answer])}</small></div>`).join('');
+    el.innerHTML = `<div class="result-orb">${a.score}</div><div class="eyebrow">HASIL KNN</div><h2>${escapeHtml(a.status)}</h2><p>${escapeHtml(a.quizTitle)} · ${a.correct}/${a.total} jawaban benar${auto ? ' · waktu habis' : ''}</p><div class="result-stats"><span><b>${a.score}</b>Nilai</span><span><b>+${a.xp + a.bonusXp}</b>XP total</span><span><b>${formatDuration(a.duration)}</b>Durasi</span></div><p class="result-recommendation">${escapeHtml(data.recommendation)}</p><details class="answer-review"><summary>Tinjau jawaban</summary>${review}</details><button class="button button-primary" id="result-next">Lihat kuis berikutnya <span>→</span></button>`;
     document.getElementById('result-next').onclick = () => { el.hidden = true; document.getElementById('quiz-list').scrollIntoView({ behavior: 'smooth' }); };
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -216,7 +290,7 @@
     const done = state.dailyQuest.date === today() && state.dailyQuest.done;
     document.getElementById('daily-quest-list').innerHTML = `<div class="quest-row"><span class="quest-icon">✦</span><span><b>Misi hari ini</b><small>Selesaikan 1 kuis latihan · bonus 15 XP</small></span><span class="quest-state">${done ? 'SELESAI ✓' : '0/1'}</span></div>`;
   }
-  function last7() { return Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toISOString().slice(0, 10); }); }
+  function last7() { return Array.from({ length: 7 }, (_, i) => dayKey(new Date(Date.now() - (6 - i) * 86400000))); }
   function renderBars(el, values, labels, max) {
     el.innerHTML = values.map((v, i) => `<div class="bar-column"><div class="bar-value">${v || ''}</div><div class="bar-track"><i style="height:${max ? Math.max(v ? 5 : 0, v / max * 100) : 0}%"></i></div><small>${labels[i]}</small></div>`).join('');
   }
@@ -241,41 +315,51 @@
     const rows = [...samples, { n: state.profileName || 'Pembelajar lokal (kamu)', xp: localXp, score: state.history.length ? Math.round(state.history.reduce((a, x) => a + x.score, 0) / state.history.length) : 0, you: true }].sort((a, b) => b.xp - a.xp || b.score - a.score);
     document.getElementById('leaderboard-rows').innerHTML = rows.map((x, i) => `<div class="leader-row ${x.you ? 'leader-you' : ''}"><span class="leader-place">${String(i + 1).padStart(2, '0')}</span><span class="leader-avatar">${x.you ? 'L' : 'S'}</span><span class="leader-name"><b>${escapeHtml(x.n)}</b><small>${x.you ? 'Data lokal perangkat ini' : 'Peserta simulasi'}</small></span><span class="leader-score"><b>${x.xp} XP</b><small>rata-rata ${x.score || '—'}</small></span></div>`).join('');
   }
-  const featureNames = ['total_events', 'quiz_started', 'quiz_submitted', 'quiz_viewed', 'quiz_reviewed', 'quiz_module_viewed', 'assignment_events', 'learning_material_events', 'forum_events', 'active_days', 'active_span_days', 'unique_activity_types', 'submit_rate', 'dominant_activity_type'];
-  function buildFeatures() {
-    const logs = state.activities, count = type => logs.filter(x => x.type === type).length;
-    const dates = [...new Set(logs.map(x => x.date))].sort(), typeMap = { quiz_started: 'Kuis', quiz_submitted: 'Kuis', quiz_viewed: 'Kuis', quiz_reviewed: 'Kuis', quiz_module_viewed: 'Navigasi Kursus', material_open: 'Materi Belajar', material_complete: 'Materi Belajar' };
-    const types = logs.map(x => typeMap[x.type] || 'Aktivitas Lain'), freq = types.reduce((a, x) => (a[x] = (a[x] || 0) + 1, a), {}), dominant = Object.keys(freq).sort((a, b) => freq[b] - freq[a])[0] || 'Aktivitas Lain';
-    const span = dates.length ? Math.max(1, Math.round((new Date(`${dates[dates.length - 1]}T12:00:00`) - new Date(`${dates[0]}T12:00:00`)) / 86400000) + 1) : 0;
-    const features = { total_events: logs.length, quiz_started: count('quiz_started'), quiz_submitted: count('quiz_submitted'), quiz_viewed: count('quiz_viewed'), quiz_reviewed: count('quiz_reviewed'), quiz_module_viewed: count('quiz_module_viewed'), assignment_events: 0, learning_material_events: count('material_open') + count('material_complete'), forum_events: 0, active_days: dates.length, active_span_days: span, unique_activity_types: new Set(types).size, submit_rate: count('quiz_started') ? Math.min(1, count('quiz_submitted') / count('quiz_started')) : 0, dominant_activity_type: dominant };
-    return features;
+  function renderDashboardPrediction() {
+    const data = state.latestPrediction;
+    const target = document.getElementById('dashboard-recommendation');
+    const summary = document.getElementById('dashboard-prediction');
+    if (!data) {
+      target.textContent = 'Selesaikan kuis untuk mendapat rekomendasi KNN.';
+      summary.innerHTML = '<p class="empty-copy">Hasil KNN akan tampil setelah kuis pertama selesai.</p>';
+      return;
+    }
+    target.textContent = data.recommendation;
+    const badgeText = data.badges.length ? data.badges.join(', ') : 'Belum ada badge baru';
+    const progress = Math.round(modules.filter(m => state.materialProgress[m.id]).length / modules.length * 100);
+    summary.innerHTML = `<div class="eyebrow">HASIL MODEL KNN TERAKHIR</div><div class="knn-metrics"><span><small>Status</small><b class="${data.status === 'Tuntas' ? 'complete' : 'remedial'}">${escapeHtml(data.status)}</b></span><span><small>Nilai kuis</small><b>${data.quiz_score}/100</b></span><span><small>XP kuis</small><b>+${data.xp_earned}</b></span><span><small>Akumulasi XP</small><b>${state.xp}</b></span><span><small>Level adaptif</small><b>${state.unlockedLevel}/${data.max_level}</b></span><span><small>Level berikutnya</small><b>${data.next_level ? `Level ${data.next_level}` : 'Penguatan'}</b></span><span><small>Progres materi</small><b>${progress}%</b></span><span><small>Badge baru</small><b>${escapeHtml(badgeText)}</b></span></div><div class="knn-progress"><i style="width:${progress}%"></i></div><p>${escapeHtml(data.recommendation)}</p>`;
   }
   function renderAdaptiveSummary() {
-    const f = buildFeatures();
-    document.getElementById('feature-summary').innerHTML = `<div class="feature-grid">${featureNames.map(k => `<div class="feature-item"><small>${k}</small><b>${escapeHtml(f[k])}</b></div>`).join('')}</div><p class="feature-footnote">Tugas dan forum bernilai 0 karena prototipe ini tidak mencatat aktivitas tersebut. Data diambil dari aktivitas halaman ini.</p>`;
-    const n = document.getElementById('model-notice-text'); if (healthData) n.textContent = healthData.model_available ? 'Model Joblib tersedia. Analisis menggunakan model terlatih yang terpasang.' : 'Model Joblib belum tersedia. Letakkan model asli di model/model_kelompok_3.joblib untuk mengaktifkan prediksi.';
+    const f = state.latestPrediction?.features_used;
+    document.getElementById('feature-summary').innerHTML = f ? `<div class="feature-grid">${Object.entries(f).map(([k, v]) => `<div class="feature-item"><small>${escapeHtml(k)}</small><b>${escapeHtml(v)}</b></div>`).join('')}</div><p class="feature-footnote">Nilai kosong diisi dengan median training dari Joblib.</p>` : '<p class="empty-copy">Selesaikan kuis untuk melihat 11 fitur yang dipakai model.</p>';
+    const n = document.getElementById('model-notice-text');
+    if (healthData) n.textContent = healthData.model_loaded ? 'Model KNN asli berhasil dimuat dari model/gamified_its_model.joblib.' : (healthData.detail || 'Model KNN tidak tersedia.');
   }
   async function checkHealth() {
     const pill = document.getElementById('api-status');
-    try { const [h] = await Promise.all([fetch('/health').then(r => r.json()), fetch('/api/analytics').then(r => r.json())]); healthData = h; pill.innerHTML = `<i></i> API ${h.status === 'ok' ? 'terhubung' : 'tidak tersedia'}`; pill.classList.toggle('offline', !h.model_available); }
-    catch (_) { pill.innerHTML = '<i></i> API tidak terhubung'; pill.classList.add('offline'); healthData = { model_available: false }; }
+    try {
+      const response = await fetch('/health');
+      const h = await response.json();
+      healthData = h;
+      pill.innerHTML = '<i></i> API ' + (h.model_loaded ? 'dan KNN terhubung' : 'model bermasalah');
+      pill.classList.toggle('offline', !h.model_loaded);
+    } catch (_) {
+      healthData = { model_loaded: false, detail: 'API tidak terhubung.' };
+      pill.innerHTML = '<i></i> API tidak terhubung';
+      pill.classList.add('offline');
+    }
     renderAdaptiveSummary();
   }
-  async function runAnalysis() {
-    const btn = document.getElementById('run-analysis'), result = document.getElementById('adaptive-result');
-    if (state.activities.length < 1) { result.innerHTML = '<div class="empty-state">Belum ada aktivitas untuk dianalisis. Buka materi atau kerjakan kuis terlebih dahulu.</div>'; return; }
-    btn.disabled = true; btn.innerHTML = 'Memproses…'; result.innerHTML = '<div class="empty-state">Sedang mengirim ringkasan aktivitas ke pipeline model…</div>';
-    try {
-      const h = await fetch('/health').then(r => r.json()); healthData = h;
-      if (!h.model_available) { result.innerHTML = '<div class="empty-state"><b>Model Joblib belum tersedia.</b><p>Prediksi belum dijalankan. Tambahkan file model asli sesuai nama dan lokasi yang ditampilkan pada panel ketersediaan model.</p></div>'; renderAdaptiveSummary(); return; }
-      const response = await fetch('/api/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildFeatures()) });
-      const data = await response.json(); if (!response.ok) throw new Error(data.detail || 'Analisis gagal.');
-      state.latestPrediction = { ...data, at: new Date().toISOString() }; logActivity('analysis_run', 'Menjalankan analisis adaptif'); save();
-      let recommendation = null; try { recommendation = await fetch(`/api/recommendations?status=${encodeURIComponent(data.status)}`).then(r => r.json()); } catch (_) { }
-      result.innerHTML = `<div class="eyebrow">HASIL MODEL ${escapeHtml(data.algorithm)}</div><h2 class="prediction-status ${data.class_id === 1 ? 'remedial' : 'complete'}">${escapeHtml(data.status)}</h2><p>${recommendation ? escapeHtml(recommendation.message) : 'Hasil prediksi berasal dari pipeline Joblib.'}</p><div class="result-stats"><span><b>${data.confidence == null ? '—' : `${Math.round(data.confidence * 100)}%`}</b>Probabilitas kelas</span><span><b>${data.class_id}</b>Kelas prediksi</span></div><small>Probabilitas bukan kepastian. ${escapeHtml(data.confidence_label || '')}</small>`;
-    } catch (err) { result.innerHTML = `<div class="empty-state"><b>Analisis gagal.</b><p>${escapeHtml(err.message)}</p></div>`; }
-    finally { btn.disabled = false; btn.innerHTML = 'Analisis aktivitasku <span>→</span>'; renderAdaptiveSummary(); }
+  function renderAdaptiveResult() {
+    const data = state.latestPrediction;
+    const result = document.getElementById('adaptive-result');
+    if (!data) {
+      result.innerHTML = '<div class="empty-state">Kerjakan kuis untuk menjalankan prediksi KNN.</div>';
+      return;
+    }
+    result.innerHTML = `<div class="eyebrow">HASIL MODEL KNN</div><h2 class="prediction-status ${data.status === 'Tuntas' ? 'complete' : 'remedial'}">${escapeHtml(data.status)}</h2><p>${escapeHtml(data.recommendation)}</p><div class="knn-metrics"><span><small>Nilai</small><b>${data.quiz_score}/100</b></span><span><small>XP</small><b>+${data.xp_earned}</b></span><span><small>Level terbuka</small><b>${data.unlocked_level}/${data.max_level}</b></span><span><small>Progres materi</small><b>${data.learning_progress}%</b></span><span><small>Badge baru</small><b>${escapeHtml(data.badges.join(', ') || 'Belum ada')}</b></span><span><small>Probabilitas kelas</small><b>${data.confidence === null ? '—' : Math.round(data.confidence * 100) + '%'}</b></span></div><small>Prediksi KNN berdasarkan hasil kuis dan aktivitas yang tercatat.</small>`;
   }
+  function runAnalysis() { renderAdaptiveResult(); }
   function bind() {
     document.querySelectorAll('[data-page]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); setPage(a.dataset.page); }));
     document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => setPage(b.dataset.goto)));
@@ -286,7 +370,7 @@
     window.addEventListener('hashchange', () => setPage(location.hash.slice(1)));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('dialog-root').innerHTML = ''; });
   }
-  function renderAll() { renderCommon(); renderAnalytics(); renderAdaptiveSummary(); renderLeaderboard(); }
+  function renderAll() { renderCommon(); renderAnalytics(); renderAdaptiveSummary(); renderAdaptiveResult(); renderLeaderboard(); }
   function init() { if (state.dailyQuest.date !== today()) state.dailyQuest = { date: today(), done: false, rewardClaimed: false }; save(); bind(); renderAll(); checkHealth(); setPage(location.hash.slice(1) || 'beranda'); }
   document.addEventListener('DOMContentLoaded', init);
 })();
