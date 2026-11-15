@@ -1,0 +1,85 @@
+﻿<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101226">
+  <meta name="description" content="Gamified ITS: platform tutoring adaptif untuk membantu mahasiswa belajar bertahap.">
+  <title>Gamified ITS — Adaptive Level & Engagement Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#beranda" aria-label="Gamified ITS beranda">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span class="brand-copy"><b>gamified<span>its</span></b><small>ADAPTIVE LEARNING</small></span>
+      </a>
+      <div class="side-label">MENU UTAMA</div>
+      <nav class="main-nav" aria-label="Navigasi utama">
+        <a class="nav-link active" href="#beranda" data-page="beranda"><span class="nav-icon">⌂</span> Beranda</a>
+        <a class="nav-link" href="#jalur" data-page="jalur"><span class="nav-icon">⌁</span> Jalur belajar <span class="nav-count">3</span></a>
+        <a class="nav-link" href="#tantangan" data-page="tantangan"><span class="nav-icon">◈</span> Tantangan</a>
+        <a class="nav-link" href="#peringkat" data-page="peringkat"><span class="nav-icon">♜</span> Peringkat</a>
+      </nav>
+      <div class="side-label side-label-progress">PERJALANANMU</div>
+      <div class="sidebar-level">
+        <div class="mini-level"><span>LV</span><b id="side-level">04</b><i>✦</i></div>
+        <div class="side-level-copy"><b>Problem Solver</b><span><strong id="side-xp">680</strong> / 1.000 XP</span></div>
+        <div class="side-progress"><span id="side-progress"></span></div>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="help-card"><div class="help-orb">✦</div><b>Belajar sedikit,<br>maju setiap hari.</b><p>Jaga ritmemu dan kumpulkan XP.</p><a href="#jalur">Lihat jalur belajar <span>↗</span></a></div>
+        <button class="profile-mini" type="button"><span class="avatar avatar-small">AR</span><span><b>Aditya Rahman</b><small>Mahasiswa</small></span><span class="more">···</span></button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="icon-button menu-toggle" id="menu-toggle" aria-label="Buka navigasi">☰</button>
+        <div class="breadcrumb"><span>Workspace</span><i>/</i><b id="breadcrumb-current">Beranda</b></div>
+        <div class="top-actions"><span class="today" id="today-label"></span><button class="icon-button notification" aria-label="Notifikasi">♧<i></i></button><span class="avatar">AR</span></div>
+      </header>
+      <div class="content-wrap">
+        <div class="demo-banner"><span class="live-dot"></span><b>MODE DEMO</b><span>Tampilan pratinjau — hasil belajar dan rekomendasi belum terhubung ke model.</span><button id="banner-close" aria-label="Tutup">×</button></div>
+
+        <section class="page-section active" id="page-beranda">
+          <div class="welcome-row"><div><div class="eyebrow"><span class="sparkle">✦</span> <span id="welcome-date"></span></div><h1>Terus berkembang,<br><span>Aditya.</span></h1><p class="intro">Satu langkah kecil hari ini membawa kamu lebih dekat ke target.</p></div><div class="welcome-actions"><button class="button button-quiet" id="review-btn"><span>◷</span> Tinjau progres</button><button class="button button-primary" data-goto="tantangan">Mulai belajar <span>→</span></button></div></div>
+
+          <div class="hero-card">
+            <div class="hero-copy"><div class="hero-kicker"><span class="hero-icon">✦</span> PERJALANAN BELAJARMU</div><h2>Level up, satu<br>tantangan demi satu.</h2><p>Kamu sedang membangun kebiasaan belajar yang konsisten. Pertahankan momentummu!</p><button class="button button-light" data-goto="jalur">Lanjutkan perjalanan <span>→</span></button><div class="hero-foot"><span>✧ &nbsp;Progres tersimpan otomatis</span><span>01 / 04 <b>● ○ ○ ○</b></span></div></div>
+            <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-planet"><span>✦</span></div><div class="float-chip chip-xp">✧ &nbsp;+120 XP</div><div class="float-chip chip-level">LEVEL UP! <b>↗</b></div><div class="float-star star-one">✦</div><div class="float-star star-two">✧</div><div class="art-spark"></div></div>
+          </div>
+
+          <div class="section-heading"><div><div class="eyebrow">RINGKASAN AKTIVITAS</div><h2>Progresmu hari ini</h2></div><button class="text-button" id="details-btn">Detail aktivitas <span>→</span></button></div>
+          <div class="stats-grid">
+            <article class="stat-card"><div class="stat-top"><span class="stat-icon xp-icon">✧</span><span class="stat-change">+ 80 hari ini</span></div><div class="stat-value"><b id="xp-value">680</b><small>XP</small></div><div class="stat-caption">Experience points</div><div class="stat-bottom"><span>Level 4</span><div class="tiny-progress"><i id="stat-progress"></i></div><span>68%</span></div></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-icon streak-icon">♨</span><span class="streak-pill">🔥 7 hari</span></div><div class="stat-value"><b>7</b><small>hari</small></div><div class="stat-caption">Learning streak</div><div class="week-dots"><i class="done">S</i><i class="done">S</i><i class="done">R</i><i class="done">K</i><i class="done">J</i><i class="done">S</i><i class="today-dot">M</i></div></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-icon badge-icon">✺</span><span class="muted-chip">Koleksi</span></div><div class="stat-value"><b>4</b><small>/ 8</small></div><div class="stat-caption">Badge diperoleh</div><div class="badge-mini-row"><span>⚡</span><span>🎯</span><span>🔥</span><span>✦</span><span class="badge-locked">＋</span></div></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-icon rank-icon">♜</span><span class="rank-change">↑ 2 posisi</span></div><div class="stat-value"><b>#12</b></div><div class="stat-caption">Peringkat kelompok</div><div class="rank-foot"><span class="avatar avatar-tiny">NA</span><span class="avatar avatar-tiny avatar-purple">DP</span><span class="avatar avatar-tiny avatar-blue">RS</span><small>+ 18 teman lainnya</small></div></article>
+          </div>
+
+          <div class="lower-grid">
+            <section class="panel path-panel" id="path-preview"><div class="panel-heading"><div><div class="eyebrow">DIREKOMENDASIKAN UNTUKMU</div><h3>Jalur belajarmu</h3></div><button class="more-button" aria-label="Opsi jalur belajar">···</button></div><div class="path-course"><div class="course-symbol">⌘</div><div class="course-info"><b>Dasar Machine Learning</b><span>Modul 2 · Klasifikasi</span></div><span class="course-progress-text">2/5</span></div><div class="path-progress"><div><span style="width:42%"></span></div><small>42% selesai</small></div><div class="next-quest"><span class="quest-check">✓</span><div><b>Konsep K-Nearest Neighbors</b><small>Materi · 8 menit</small></div><span class="quest-status complete">SELESAI</span></div><div class="next-quest active-quest"><span class="quest-number">02</span><div><b>Coba kuis singkat</b><small>5 soal · +120 XP</small></div><button class="arrow-round" data-goto="tantangan" aria-label="Mulai tantangan">→</button></div><div class="next-quest locked-quest"><span class="quest-number lock">⌑</span><div><b>Latihan klasifikasi</b><small>Terkunci · Selesaikan kuis</small></div><span class="quest-status locked">TERKUNCI</span></div><button class="panel-link" data-goto="jalur">Buka semua jalur belajar <span>↗</span></button></section>
+            <section class="panel activity-panel"><div class="panel-heading"><div><div class="eyebrow">JAGA KONSISTENSI</div><h3>Aktivitas mingguan</h3></div><button class="select-period" id="period-btn">7 hari terakhir <span>⌄</span></button></div><div class="chart-legend"><span><i></i> XP terkumpul</span><b>+ 420 XP <small>minggu ini</small></b></div><div class="chart-area"><div class="chart-y"><span>200</span><span>150</span><span>100</span><span>50</span><span>0</span></div><div class="chart-plot"><div class="grid-line g1"></div><div class="grid-line g2"></div><div class="grid-line g3"></div><div class="grid-line g4"></div><svg viewBox="0 0 600 190" preserveAspectRatio="none" role="img" aria-label="Grafik XP mingguan"><defs><linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#8371ff" stop-opacity=".28"/><stop offset="1" stop-color="#8371ff" stop-opacity="0"/></linearGradient></defs><path class="chart-fill" d="M0 145 C35 135 45 105 85 118 S145 140 170 95 S220 110 255 78 S300 88 340 62 S390 108 425 76 S475 84 510 38 S560 60 600 22 L600 190 L0 190Z"/><path class="chart-line" d="M0 145 C35 135 45 105 85 118 S145 140 170 95 S220 110 255 78 S300 88 340 62 S390 108 425 76 S475 84 510 38 S560 60 600 22"/><circle cx="510" cy="38" r="5" class="chart-point"/></svg><div class="chart-x"><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span></div></div></div><div class="activity-tip"><span>✧</span><p><b>Tren positif!</b> Aktivitasmu naik <strong>18%</strong> dari minggu lalu.</p></div></section>
+          </div>
+          <div class="footer-note"><span>✦</span> Belajar konsisten lebih penting daripada belajar sempurna. <b>Semangat!</b></div>
+        </section>
+
+        <section class="page-section" id="page-jalur"><div class="subpage-head"><div><div class="eyebrow">PERJALANAN BELAJAR</div><h1>Jalur <span>belajarmu.</span></h1><p class="intro">Selesaikan tantangan untuk membuka level berikutnya.</p></div><div class="level-chip">✦ &nbsp; LEVEL 04 — PROBLEM SOLVER</div></div><div class="path-overview panel"><div><span class="course-symbol">⌘</span></div><div class="overview-main"><div class="eyebrow">KELAS AKTIF</div><h2>Dasar Machine Learning</h2><p>Kenali konsep penting dan bangun fondasi untuk perjalanan AI-mu.</p><div class="path-progress"><div><span style="width:42%"></span></div><small>2 dari 5 tantangan selesai</small></div></div><div class="overview-xp"><b>240</b><span>XP tersedia</span></div></div><div class="timeline"><div class="timeline-line"></div><article class="timeline-card done-card"><span class="timeline-node">✓</span><div class="timeline-content"><div class="timeline-meta"><span class="tag tag-done">SELESAI</span><span>8 MENIT · MATERI</span></div><h3>Pengenalan Machine Learning</h3><p>Memahami cara komputer belajar dari data.</p><div class="timeline-reward">✓ Selesai <span>+60 XP</span></div></div></article><article class="timeline-card done-card"><span class="timeline-node">✓</span><div class="timeline-content"><div class="timeline-meta"><span class="tag tag-done">SELESAI</span><span>8 MENIT · MATERI</span></div><h3>Konsep K-Nearest Neighbors</h3><p>Belajar klasifikasi berdasarkan tetangga terdekat.</p><div class="timeline-reward">✓ Selesai <span>+60 XP</span></div></div></article><article class="timeline-card current-card"><span class="timeline-node">03</span><div class="timeline-content"><div class="timeline-meta"><span class="tag tag-current">TANTANGAN BERIKUTNYA</span><span>5 SOAL · KUIS</span></div><h3>Kuis: Kenali KNN</h3><p>Uji pemahamanmu dan raih XP tambahan.</p><button class="button button-primary" data-goto="tantangan">Mulai kuis <span>→</span></button><span class="timeline-xp">✧ +120 XP</span></div></article><article class="timeline-card locked-card"><span class="timeline-node">⌑</span><div class="timeline-content"><div class="timeline-meta"><span class="tag tag-locked">TERKUNCI</span><span>12 MENIT · LATIHAN</span></div><h3>Latihan klasifikasi sederhana</h3><p>Selesaikan kuis sebelumnya untuk membuka tantangan ini.</p><div class="timeline-lock">⌑ Terkunci</div></div></article></div></section>
+
+        <section class="page-section" id="page-tantangan"><div class="subpage-head"><div><div class="eyebrow">TANTANGAN HARI INI</div><h1>Belajar sambil <span>bermain.</span></h1><p class="intro">Selesaikan kuis untuk mendapatkan XP dan membuka tantangan baru.</p></div><div class="streak-chip">🔥 &nbsp;7 hari berturut-turut</div></div><div class="challenge-layout"><div class="quiz-card panel"><div class="quiz-top"><span class="tag tag-current">KUIS ADAPTIF · DEMO</span><span class="quiz-count" id="quiz-count">PERTANYAAN 01 / 03</span></div><div class="quiz-progress"><span id="quiz-progress"></span></div><div class="quiz-topic">DASAR MACHINE LEARNING <span>·</span> KNN</div><h2 id="question-title">Apa kepanjangan dari algoritma KNN?</h2><div class="answers" id="answers"></div><div class="quiz-feedback" id="quiz-feedback" hidden></div><div class="quiz-footer"><span>✧ Hadiah tantangan <b>+120 XP</b></span><button class="button button-primary" id="submit-answer" disabled>Periksa jawaban <span>→</span></button></div></div><aside class="challenge-aside"><div class="panel reward-panel"><div class="reward-orb">✧</div><div class="eyebrow">HADIAH TANTANGAN</div><h3>120 <span>XP</span></h3><p>Jawab soal dengan benar untuk mengumpulkan poin.</p><div class="reward-divider"></div><div class="reward-row"><span>✧</span> <b>+40 XP</b><small>setiap jawaban benar</small></div><div class="reward-row"><span>⚡</span> <b>+20 XP</b><small>bonus streak</small></div></div><div class="panel adaptive-note"><span class="adaptive-icon">✦</span><div><b>Belajar adaptif</b><p>Tingkat tantangan menyesuaikan progres belajarmu.</p></div></div></aside></div></section>
+
+        <section class="page-section" id="page-peringkat"><div class="subpage-head"><div><div class="eyebrow">KOMPETISI SEHAT</div><h1>Peringkat <span>kelompok.</span></h1><p class="intro">Rayakan progres bersama teman-temanmu.</p></div><div class="select-period">Minggu ini <span>⌄</span></div></div><div class="leaderboard panel"><div class="leaderboard-head"><div><div class="eyebrow">KELAS SI-2024-A</div><h2>Para pembelajar aktif</h2></div><span class="muted-chip">Diperbarui hari ini</span></div><div class="leader-row podium second"><span class="place">02</span><span class="avatar avatar-purple">DP</span><div class="leader-name"><b>Dinda Putri</b><small>Level 5 · Data Explorer</small></div><span class="leader-xp">920 <small>XP</small></span><span class="medal">🥈</span></div><div class="leader-row podium first"><span class="place">01</span><span class="avatar avatar-gold">NA</span><div class="leader-name"><b>Nadia Aulia <i>✦</i></b><small>Level 6 · Model Builder</small></div><span class="leader-xp">1.240 <small>XP</small></span><span class="medal">🥇</span></div><div class="leader-row podium third"><span class="place">03</span><span class="avatar avatar-blue">RS</span><div class="leader-name"><b>Rizky Saputra</b><small>Level 5 · Data Explorer</small></div><span class="leader-xp">850 <small>XP</small></span><span class="medal">🥉</span></div><div class="leader-separator">POSISIMU</div><div class="leader-row self-row"><span class="place">12</span><span class="avatar">AR</span><div class="leader-name"><b>Aditya Rahman <span class="you-tag">KAMU</span></b><small>Level 4 · Problem Solver</small></div><span class="leader-xp"><span id="leader-xp">680</span> <small>XP</small></span><span class="rank-rise">↑ 2</span></div><div class="leader-foot">Peringkat dan nama pada layar ini merupakan data contoh.</div></div></section>
+        <footer class="academic-disclaimer"><span>ⓘ</span><p><b>Academic Disclaimer</b> — Sistem ini merupakan prototipe Intelligent Tutoring System untuk keperluan edukasi. Status belajar dan rekomendasi adaptif pada layar demo belum dihasilkan oleh model klasifikasi.</p></footer>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
+
